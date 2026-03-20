@@ -2,6 +2,7 @@ package com.nisha.projects.prompt2app.controller;
 
 import com.nisha.projects.prompt2app.dto.member.InviteMemberRequest;
 import com.nisha.projects.prompt2app.dto.member.MemberResponse;
+import com.nisha.projects.prompt2app.dto.member.UpdateMemberRoleRequest;
 import com.nisha.projects.prompt2app.entity.ProjectMember;
 import com.nisha.projects.prompt2app.service.ProjectMemberService;
 import java.util.List;
@@ -31,19 +32,18 @@ public class ProjectMemberController {
   }
 
   @PatchMapping("/{memberId}")
-  public ResponseEntity<MemberResponse> updateMember(
+  public ResponseEntity<MemberResponse> updateMemberRole(
       @PathVariable Long projectId,
       @PathVariable Long memberId,
-      @RequestBody InviteMemberRequest request) {
+      @RequestBody UpdateMemberRoleRequest request) {
     Long userId = 1L;
-    return ResponseEntity.ok(projectMemberService.updateMemberRole(projectId, memberId, userId));
+    return ResponseEntity.ok(
+        projectMemberService.updateMemberRole(projectId, memberId, request, userId));
   }
 
   @DeleteMapping("/{memberId}")
   public ResponseEntity<MemberResponse> deleteMember(
-      @PathVariable Long projectId,
-      @PathVariable Long memberId,
-      @RequestBody InviteMemberRequest request) {
+      @PathVariable Long projectId, @PathVariable Long memberId) {
     Long userId = 1L;
     return ResponseEntity.ok(projectMemberService.deleteProjectMember(projectId, memberId, userId));
   }
