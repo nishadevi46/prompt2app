@@ -9,6 +9,6 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ProjectMemberId {
-    Long projectId;
-    Long memberId;
+  Long projectId;
+  Long memberId;
 }
