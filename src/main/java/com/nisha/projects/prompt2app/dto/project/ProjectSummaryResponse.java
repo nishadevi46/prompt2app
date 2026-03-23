@@ -2,4 +2,4 @@ package com.nisha.projects.prompt2app.dto.project;
 
 import java.time.Instant;
 
-public record ProjectSummaryResponse(Long id, String name, Instant createdAt, Instant updatedAt) {}
+public record ProjectSummaryResponse(Long id, String projectName, Instant createdAt, Instant updatedAt) {}
