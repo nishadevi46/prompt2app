@@ -3,7 +3,6 @@ package com.nisha.projects.prompt2app.controller;
 import com.nisha.projects.prompt2app.dto.member.InviteMemberRequest;
 import com.nisha.projects.prompt2app.dto.member.MemberResponse;
 import com.nisha.projects.prompt2app.dto.member.UpdateMemberRoleRequest;
-import com.nisha.projects.prompt2app.entity.ProjectMember;
 import com.nisha.projects.prompt2app.service.ProjectMemberService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ public class ProjectMemberController {
   private final ProjectMemberService projectMemberService;
 
   @GetMapping
-  public ResponseEntity<List<ProjectMember>> getProjectMembers(@PathVariable Long projectId) {
+  public ResponseEntity<List<MemberResponse>> getProjectMembers(@PathVariable Long projectId) {
     Long userId = 1L;
     return ResponseEntity.ok(projectMemberService.getProjectMembers(projectId, userId));
   }
@@ -42,9 +41,10 @@ public class ProjectMemberController {
   }
 
   @DeleteMapping("/{memberId}")
-  public ResponseEntity<MemberResponse> deleteMember(
+  public ResponseEntity<Void> removeMember(
       @PathVariable Long projectId, @PathVariable Long memberId) {
     Long userId = 1L;
-    return ResponseEntity.ok(projectMemberService.deleteProjectMember(projectId, memberId, userId));
+    projectMemberService.removeProjectMember(projectId, memberId, userId);
+    return ResponseEntity.noContent().build();
   }
 }

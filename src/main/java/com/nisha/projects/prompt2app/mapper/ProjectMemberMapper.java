@@ -1,0 +1,19 @@
+package com.nisha.projects.prompt2app.mapper;
+
+import com.nisha.projects.prompt2app.dto.member.MemberResponse;
+import com.nisha.projects.prompt2app.entity.ProjectMember;
+import com.nisha.projects.prompt2app.entity.User;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+@Mapper(componentModel = "spring")
+public interface ProjectMemberMapper {
+  @Mapping(target = "userId", source = "id")
+  @Mapping(target = "projectRole", constant = "OWNER")
+  MemberResponse toMemberResponseFromOwner(User owner);
+
+  @Mapping(target = "userId", source = "user.id")
+  @Mapping(target = "email", source = "user.email")
+  @Mapping(target = "name", source = "user.name")
+  MemberResponse toMemberResponseFromMember(ProjectMember projectMember);
+}
