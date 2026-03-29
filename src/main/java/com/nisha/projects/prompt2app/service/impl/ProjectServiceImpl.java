@@ -4,8 +4,13 @@ import com.nisha.projects.prompt2app.dto.project.ProjectRequest;
 import com.nisha.projects.prompt2app.dto.project.ProjectResponse;
 import com.nisha.projects.prompt2app.dto.project.ProjectSummaryResponse;
 import com.nisha.projects.prompt2app.entity.Project;
+import com.nisha.projects.prompt2app.entity.ProjectMember;
+import com.nisha.projects.prompt2app.entity.ProjectMemberId;
 import com.nisha.projects.prompt2app.entity.User;
+import com.nisha.projects.prompt2app.enums.ProjectRole;
+import com.nisha.projects.prompt2app.error.ResourceNotFoundException;
 import com.nisha.projects.prompt2app.mapper.ProjectMapper;
+import com.nisha.projects.prompt2app.repository.ProjectMemberRepository;
 import com.nisha.projects.prompt2app.repository.ProjectRepository;
 import com.nisha.projects.prompt2app.repository.UserRepository;
 import com.nisha.projects.prompt2app.service.ProjectService;
@@ -25,13 +30,29 @@ public class ProjectServiceImpl implements ProjectService {
 
   ProjectRepository projectRepository;
   UserRepository userRepository;
+  ProjectMemberRepository projectMemberRepository;
   ProjectMapper projectMapper;
 
   @Override
   public ProjectResponse createProject(ProjectRequest request, Long userId) {
-    User owner = userRepository.findById(userId).orElseThrow();
-    Project project = Project.builder().name(request.name()).owner(owner).isPublic(false).build();
+    User owner =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+    Project project = Project.builder().name(request.name()).isPublic(false).build();
     project = projectRepository.save(project);
+    ProjectMemberId projectMemberId = new ProjectMemberId(project.getId(), owner.getId());
+    ProjectMember projectMember =
+        ProjectMember.builder()
+            .id(projectMemberId)
+            .projectRole(ProjectRole.OWNER)
+            .user(owner)
+            .acceptedAt(Instant.now())
+            .invitedAt(Instant.now())
+            .project(project)
+            .build();
+    projectMemberRepository.save(projectMember);
+
     return projectMapper.toProjectResponse(project);
   }
 
@@ -51,9 +72,6 @@ public class ProjectServiceImpl implements ProjectService {
   public ProjectResponse updateProject(Long id, ProjectRequest request, Long userId) {
 
     Project project = getAccessibleProjectById(id, userId);
-    if (!project.getOwner().getId().equals(userId)) {
-      throw new RuntimeException("You are not allowed to update thed name");
-    }
     project.setName(request.name());
     project = projectRepository.save(project);
     return projectMapper.toProjectResponse(project);
@@ -62,14 +80,14 @@ public class ProjectServiceImpl implements ProjectService {
   @Override
   public void softDelete(Long id, Long userId) {
     Project project = getAccessibleProjectById(id, userId);
-    if (!project.getOwner().getId().equals(userId)) {
-      throw new RuntimeException("You are not allowed to delete");
-    }
+
     project.setDeletedAt(Instant.now());
     projectRepository.save(project);
   }
 
-  public Project getAccessibleProjectById(Long id, Long userId) {
-    return projectRepository.findAccessibleByProjectId(id, userId).orElseThrow();
+  public Project getAccessibleProjectById(Long projectId, Long userId) {
+    return projectRepository
+        .findAccessibleByProjectId(projectId, userId)
+        .orElseThrow(() -> new ResourceNotFoundException("Project", projectId.toString()));
   }
 }
