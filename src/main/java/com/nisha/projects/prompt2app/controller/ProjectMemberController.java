@@ -4,6 +4,7 @@ import com.nisha.projects.prompt2app.dto.member.InviteMemberRequest;
 import com.nisha.projects.prompt2app.dto.member.MemberResponse;
 import com.nisha.projects.prompt2app.dto.member.UpdateMemberRoleRequest;
 import com.nisha.projects.prompt2app.service.ProjectMemberService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,7 @@ public class ProjectMemberController {
 
   @PostMapping
   public ResponseEntity<MemberResponse> inviteMember(
-      @PathVariable Long projectId, @RequestBody InviteMemberRequest request) {
+      @PathVariable Long projectId, @RequestBody @Valid InviteMemberRequest request) {
     Long userId = 1L;
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(projectMemberService.inviteMember(projectId, request, userId));
@@ -34,7 +35,7 @@ public class ProjectMemberController {
   public ResponseEntity<MemberResponse> updateMemberRole(
       @PathVariable Long projectId,
       @PathVariable Long memberId,
-      @RequestBody UpdateMemberRoleRequest request) {
+      @RequestBody @Valid UpdateMemberRoleRequest request) {
     Long userId = 1L;
     return ResponseEntity.ok(
         projectMemberService.updateMemberRole(projectId, memberId, request, userId));

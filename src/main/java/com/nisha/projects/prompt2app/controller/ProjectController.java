@@ -4,6 +4,7 @@ import com.nisha.projects.prompt2app.dto.project.ProjectRequest;
 import com.nisha.projects.prompt2app.dto.project.ProjectResponse;
 import com.nisha.projects.prompt2app.dto.project.ProjectSummaryResponse;
 import com.nisha.projects.prompt2app.service.ProjectService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,7 +30,7 @@ public class ProjectController {
   }
 
   @PostMapping
-  public ResponseEntity<ProjectResponse> createProject(@RequestBody ProjectRequest request) {
+  public ResponseEntity<ProjectResponse> createProject(@RequestBody @Valid ProjectRequest request) {
     Long userId = 1L;
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(projectService.createProject(request, userId));
@@ -37,7 +38,7 @@ public class ProjectController {
 
   @PatchMapping("/{id}")
   public ResponseEntity<ProjectResponse> updateProject(
-      @PathVariable Long id, @RequestBody ProjectRequest request) {
+      @PathVariable Long id, @RequestBody @Valid ProjectRequest request) {
     Long userId = 1L;
     return ResponseEntity.ok(projectService.updateProject(id, request, userId));
   }
