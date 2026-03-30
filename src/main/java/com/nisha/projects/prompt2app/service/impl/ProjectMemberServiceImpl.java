@@ -11,6 +11,7 @@ import com.nisha.projects.prompt2app.mapper.ProjectMemberMapper;
 import com.nisha.projects.prompt2app.repository.ProjectMemberRepository;
 import com.nisha.projects.prompt2app.repository.ProjectRepository;
 import com.nisha.projects.prompt2app.repository.UserRepository;
+import com.nisha.projects.prompt2app.security.AuthUtil;
 import com.nisha.projects.prompt2app.service.ProjectMemberService;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -30,9 +31,11 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
   ProjectRepository projectRepository;
   ProjectMemberMapper projectMemberMapper;
   UserRepository userRepository;
+  AuthUtil authUtil;
 
   @Override
-  public List<MemberResponse> getProjectMembers(Long projectId, Long userId) {
+  public List<MemberResponse> getProjectMembers(Long projectId) {
+    Long userId = authUtil.getCurrentUserId();
     Project project = getAccessibleProjectById(projectId, userId);
     return projectMemberRepository.findByProjectId(projectId).stream()
         .map(projectMemberMapper::toMemberResponseFromMember)
@@ -40,7 +43,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
   }
 
   @Override
-  public MemberResponse inviteMember(Long projectId, InviteMemberRequest request, Long userId) {
+  public MemberResponse inviteMember(Long projectId, InviteMemberRequest request) {
+    Long userId = authUtil.getCurrentUserId();
     Project project = getAccessibleProjectById(projectId, userId);
 
     User invitee = userRepository.findByUsername(request.username()).orElseThrow();
@@ -65,7 +69,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
 
   @Override
   public MemberResponse updateMemberRole(
-      Long projectId, Long memberId, UpdateMemberRoleRequest request, Long userId) {
+      Long projectId, Long memberId, UpdateMemberRoleRequest request) {
+    Long userId = authUtil.getCurrentUserId();
     Project project = getAccessibleProjectById(projectId, userId);
 
     ProjectMemberId projectMemberId = new ProjectMemberId(projectId, memberId);
@@ -76,7 +81,8 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
   }
 
   @Override
-  public void removeProjectMember(Long projectId, Long memberId, Long userId) {
+  public void removeProjectMember(Long projectId, Long memberId) {
+    Long userId = authUtil.getCurrentUserId();
     Project project = getAccessibleProjectById(projectId, userId);
 
     ProjectMemberId projectMemberId = new ProjectMemberId(projectId, memberId);
