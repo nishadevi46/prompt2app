@@ -2,11 +2,23 @@ package com.nisha.projects.prompt2app.repository;
 
 import com.nisha.projects.prompt2app.entity.ProjectMember;
 import com.nisha.projects.prompt2app.entity.ProjectMemberId;
+import com.nisha.projects.prompt2app.enums.ProjectRole;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> {
   List<ProjectMember> findByProjectId(Long projectId);
+
+  @Query(
+      """
+            SELECT pm.projectRole FROM ProjectMember pm
+            WHERE pm.id.projectId = :projectId AND pm.id.userId = :userId
+            """)
+  Optional<ProjectRole> findRoleByProjectIdAndUserId(
+      @Param("projectId") Long projectId, @Param("userId") Long userId);
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -68,25 +69,28 @@ public class ProjectServiceImpl implements ProjectService {
   }
 
   @Override
-  public ProjectResponse getUserProjectById(Long id) {
+  @PreAuthorize("@security.canViewProject(#projectId)")
+  public ProjectResponse getUserProjectById(Long projectId) {
     Long userId = authUtil.getCurrentUserId();
-    Project project = getAccessibleProjectById(id, userId);
+    Project project = getAccessibleProjectById(projectId, userId);
     return projectMapper.toProjectResponse(project);
   }
 
   @Override
-  public ProjectResponse updateProject(Long id, ProjectRequest request) {
+  @PreAuthorize("@security.canEditProject(#projectId)")
+  public ProjectResponse updateProject(Long projectId, ProjectRequest request) {
     Long userId = authUtil.getCurrentUserId();
-    Project project = getAccessibleProjectById(id, userId);
+    Project project = getAccessibleProjectById(projectId, userId);
     project.setName(request.name());
     project = projectRepository.save(project);
     return projectMapper.toProjectResponse(project);
   }
 
   @Override
-  public void softDelete(Long id) {
+  @PreAuthorize("@security.canDeleteProject(#projectId)")
+  public void softDelete(Long projectId) {
     Long userId = authUtil.getCurrentUserId();
-    Project project = getAccessibleProjectById(id, userId);
+    Project project = getAccessibleProjectById(projectId, userId);
 
     project.setDeletedAt(Instant.now());
     projectRepository.save(project);
