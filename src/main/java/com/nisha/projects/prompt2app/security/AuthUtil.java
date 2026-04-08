@@ -36,9 +36,10 @@ public class AuthUtil {
 
   public JwtUserPrincipal verifyAccessToken(String token) {
     Claims claims =
-        Jwts.parser().verifyWith(getSecretKey()).build().parseClaimsJws(token).getPayload();
+        Jwts.parser().verifyWith(getSecretKey()).build().parseSignedClaims(token).getPayload();
+
     Long userId = Long.parseLong(claims.get("userId", String.class));
-    String username = claims.get("username", String.class);
+    String username = claims.getSubject();
     return new JwtUserPrincipal(userId, username, new ArrayList<>());
   }
 
