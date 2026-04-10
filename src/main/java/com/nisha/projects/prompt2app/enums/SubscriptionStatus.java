@@ -2,7 +2,7 @@ package com.nisha.projects.prompt2app.enums;
 
 public enum SubscriptionStatus {
   ACTIVE,
-  TRAILING,
+  TRIALING,
   CANCELED,
   PAST_DUE,
   INCOMPLETE
