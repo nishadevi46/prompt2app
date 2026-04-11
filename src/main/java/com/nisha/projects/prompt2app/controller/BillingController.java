@@ -63,7 +63,7 @@ public class BillingController {
       EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
       StripeObject stripeObject = null;
 
-      if (deserializer.getObject().isPresent()) { // happy case
+      if (deserializer.getObject().isPresent()) {
         stripeObject = deserializer.getObject().get();
       } else {
         // Fallback: Deserialize from raw JSON

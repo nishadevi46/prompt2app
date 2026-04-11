@@ -8,6 +8,7 @@ import com.nisha.projects.prompt2app.entity.ProjectMember;
 import com.nisha.projects.prompt2app.entity.ProjectMemberId;
 import com.nisha.projects.prompt2app.entity.User;
 import com.nisha.projects.prompt2app.enums.ProjectRole;
+import com.nisha.projects.prompt2app.error.BadRequestException;
 import com.nisha.projects.prompt2app.error.ResourceNotFoundException;
 import com.nisha.projects.prompt2app.mapper.ProjectMapper;
 import com.nisha.projects.prompt2app.repository.ProjectMemberRepository;
@@ -15,6 +16,7 @@ import com.nisha.projects.prompt2app.repository.ProjectRepository;
 import com.nisha.projects.prompt2app.repository.UserRepository;
 import com.nisha.projects.prompt2app.security.AuthUtil;
 import com.nisha.projects.prompt2app.service.ProjectService;
+import com.nisha.projects.prompt2app.service.SubscriptionService;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
 import java.util.List;
@@ -35,17 +37,25 @@ public class ProjectServiceImpl implements ProjectService {
   ProjectMemberRepository projectMemberRepository;
   ProjectMapper projectMapper;
   AuthUtil authUtil;
+  SubscriptionService subscriptionService;
 
   @Override
   public ProjectResponse createProject(ProjectRequest request) {
+
+    if (!subscriptionService.canCreateNewProject()) {
+      throw new BadRequestException(
+          "User cannot create a New project with current Plan, Upgrade plan now.");
+    }
+
     Long userId = authUtil.getCurrentUserId();
-    //    User owner =
-    //        userRepository
-    //            .findById(userId)
-    //            .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+    //        User owner = userRepository.findById(userId).orElseThrow(
+    //                () -> new ResourceNotFoundException("User", userId.toString())
+    //        );
     User owner = userRepository.getReferenceById(userId);
+
     Project project = Project.builder().name(request.name()).isPublic(false).build();
     project = projectRepository.save(project);
+
     ProjectMemberId projectMemberId = new ProjectMemberId(project.getId(), owner.getId());
     ProjectMember projectMember =
         ProjectMember.builder()
@@ -57,6 +67,8 @@ public class ProjectServiceImpl implements ProjectService {
             .project(project)
             .build();
     projectMemberRepository.save(projectMember);
+
+    //      projectTemplateService.initializeProjectFromTemplate(project.getId());
 
     return projectMapper.toProjectResponse(project);
   }
