@@ -1,15 +1,14 @@
 package com.nisha.projects.prompt2app.service.impl;
 
-import com.nisha.projects.prompt2app.entity.ChatSession;
-import com.nisha.projects.prompt2app.entity.ChatSessionId;
-import com.nisha.projects.prompt2app.entity.Project;
-import com.nisha.projects.prompt2app.entity.User;
+import com.nisha.projects.prompt2app.entity.*;
+import com.nisha.projects.prompt2app.enums.ChatEventType;
+import com.nisha.projects.prompt2app.enums.MessageRole;
 import com.nisha.projects.prompt2app.error.ResourceNotFoundException;
+import com.nisha.projects.prompt2app.llm.LlmResponseParser;
 import com.nisha.projects.prompt2app.llm.PromptUtils;
 import com.nisha.projects.prompt2app.llm.advisors.FileTreeContextAdvisor;
 import com.nisha.projects.prompt2app.llm.tools.CodeGenerationTools;
-import com.nisha.projects.prompt2app.repository.ProjectRepository;
-import com.nisha.projects.prompt2app.repository.UserRepository;
+import com.nisha.projects.prompt2app.repository.*;
 import com.nisha.projects.prompt2app.security.AuthUtil;
 import com.nisha.projects.prompt2app.service.AiGenerationService;
 import com.nisha.projects.prompt2app.service.ProjectFileService;
@@ -22,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -30,26 +30,35 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 @Slf4j
 public class AiGenerationServiceImpl implements AiGenerationService {
+
     private final ChatClient chatClient;
     private final AuthUtil authUtil;
     private final ProjectFileService projectFileService;
     private final FileTreeContextAdvisor fileTreeContextAdvisor;
+    private final ChatSessionRepository chatSessionRepository;
     private final ProjectRepository projectRepository;
     private final LlmResponseParser llmResponseParser;
     private final UserRepository userRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatEventRepository chatEventRepository;
     private final UsageService usageService;
+
     private static final Pattern FILE_TAG_PATTERN = Pattern.compile("<file path=\"([^\"]+)\">(.*?)</file>", Pattern.DOTALL);
+
     @Override
     @PreAuthorize("@security.canEditProject(#projectId)")
     public Flux<StreamResponse> streamResponse(String userMessage, Long projectId) {
+
+//        usageService.checkDailyTokensUsage();
+
         Long userId = authUtil.getCurrentUserId();
         ChatSession chatSession = createChatSessionIfNotExists(projectId, userId);
+
         Map<String, Object> advisorParams = Map.of(
                 "userId", userId,
                 "projectId", projectId
         );
+
         StringBuilder fullResponseBuffer = new StringBuilder();
         CodeGenerationTools codeGenerationTools = new CodeGenerationTools(projectFileService, projectId);
 
@@ -94,7 +103,48 @@ public class AiGenerationServiceImpl implements AiGenerationService {
                     String text = response.getResult().getOutput().getText();
                     return new StreamResponse(text != null ? text : "");
                 });
+    }
 
+    private void finalizeChats(String userMessage, ChatSession chatSession, String fullText, Long duration, Usage usage) {
+        Long projectId = chatSession.getProject().getId();
+
+        if(usage != null) {
+            int totalTokens = usage.getTotalTokens();
+            usageService.recordTokenUsage(chatSession.getUser().getId(), totalTokens);
+        }
+
+        // Save the User message
+        chatMessageRepository.save(
+                ChatMessage.builder()
+                        .chatSession(chatSession)
+                        .role(MessageRole.USER)
+                        .content(userMessage)
+                        .tokensUsed(usage.getPromptTokens())
+                        .build()
+        );
+
+        ChatMessage assistantChatMessage = ChatMessage.builder()
+                .role(MessageRole.ASSISTANT)
+                .content("Assistant Message here...")
+                .chatSession(chatSession)
+                .tokensUsed(usage.getCompletionTokens())
+                .build();
+
+        assistantChatMessage = chatMessageRepository.save(assistantChatMessage);
+
+        List<ChatEvent> chatEventList = llmResponseParser.parseChatEvents(fullText, assistantChatMessage);
+        chatEventList.addFirst(ChatEvent.builder()
+                .type(ChatEventType.THOUGHT)
+                .chatMessage(assistantChatMessage)
+                .content("Thought for "+duration+"s")
+                .sequenceOrder(0)
+                .build());
+
+        chatEventList.stream()
+                .filter(e -> e.getType() == ChatEventType.FILE_EDIT)
+                .forEach(e -> projectFileService.saveFile(projectId, e.getFilePath(), e.getContent()));
+
+        chatEventRepository.saveAll(chatEventList);
     }
 
     private ChatSession createChatSessionIfNotExists(Long projectId, Long userId) {

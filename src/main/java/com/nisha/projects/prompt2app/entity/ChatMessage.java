@@ -2,6 +2,7 @@ package com.nisha.projects.prompt2app.entity;
 
 import com.nisha.projects.prompt2app.enums.MessageRole;
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,9 +34,9 @@ public class ChatMessage {
     @Column(nullable = false)
     MessageRole role; // USER, ASSISTANT
 
-//    @OneToMany(mappedBy = "chatMessage", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-//    @OrderBy("sequenceOrder ASC")
-//    List<ChatEvent> events; // empty unless ASSISTANT role
+    @OneToMany(mappedBy = "chatMessage", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("sequenceOrder ASC")
+    List<ChatEvent> events; // empty unless ASSISTANT role
 
     @Column(columnDefinition = "text")
     String content; // NULL unless USER role
