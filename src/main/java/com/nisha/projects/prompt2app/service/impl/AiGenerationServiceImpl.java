@@ -3,14 +3,21 @@ package com.nisha.projects.prompt2app.service.impl;
 import com.nisha.projects.prompt2app.entity.ChatSession;
 import com.nisha.projects.prompt2app.entity.ChatSessionId;
 import com.nisha.projects.prompt2app.entity.Project;
+import com.nisha.projects.prompt2app.entity.User;
 import com.nisha.projects.prompt2app.error.ResourceNotFoundException;
 import com.nisha.projects.prompt2app.llm.PromptUtils;
+import com.nisha.projects.prompt2app.llm.advisors.FileTreeContextAdvisor;
+import com.nisha.projects.prompt2app.llm.tools.CodeGenerationTools;
+import com.nisha.projects.prompt2app.repository.ProjectRepository;
+import com.nisha.projects.prompt2app.repository.UserRepository;
 import com.nisha.projects.prompt2app.security.AuthUtil;
 import com.nisha.projects.prompt2app.service.AiGenerationService;
 import com.nisha.projects.prompt2app.service.ProjectFileService;
+import com.nisha.projects.prompt2app.service.UsageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import reactor.core.scheduler.Schedulers;
@@ -26,6 +33,13 @@ public class AiGenerationServiceImpl implements AiGenerationService {
     private final ChatClient chatClient;
     private final AuthUtil authUtil;
     private final ProjectFileService projectFileService;
+    private final FileTreeContextAdvisor fileTreeContextAdvisor;
+    private final ProjectRepository projectRepository;
+    private final LlmResponseParser llmResponseParser;
+    private final UserRepository userRepository;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ChatEventRepository chatEventRepository;
+    private final UsageService usageService;
     private static final Pattern FILE_TAG_PATTERN = Pattern.compile("<file path=\"([^\"]+)\">(.*?)</file>", Pattern.DOTALL);
     @Override
     @PreAuthorize("@security.canEditProject(#projectId)")
