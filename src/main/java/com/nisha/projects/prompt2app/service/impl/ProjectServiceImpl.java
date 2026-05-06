@@ -16,6 +16,7 @@ import com.nisha.projects.prompt2app.repository.ProjectRepository;
 import com.nisha.projects.prompt2app.repository.UserRepository;
 import com.nisha.projects.prompt2app.security.AuthUtil;
 import com.nisha.projects.prompt2app.service.ProjectService;
+import com.nisha.projects.prompt2app.service.ProjectTemplateService;
 import com.nisha.projects.prompt2app.service.SubscriptionService;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -38,7 +39,7 @@ public class ProjectServiceImpl implements ProjectService {
   ProjectMapper projectMapper;
   AuthUtil authUtil;
   SubscriptionService subscriptionService;
-
+  ProjectTemplateService projectTemplateService;
   @Override
   public ProjectResponse createProject(ProjectRequest request) {
 
@@ -68,7 +69,7 @@ public class ProjectServiceImpl implements ProjectService {
             .build();
     projectMemberRepository.save(projectMember);
 
-    //      projectTemplateService.initializeProjectFromTemplate(project.getId());
+          projectTemplateService.initializeProjectFromTemplate(project.getId());
 
     return projectMapper.toProjectResponse(project);
   }
