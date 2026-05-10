@@ -1,5 +1,6 @@
 package com.nisha.projects.prompt2app.service.impl;
 
+import com.nisha.projects.prompt2app.dto.chat.StreamResponse;
 import com.nisha.projects.prompt2app.entity.*;
 import com.nisha.projects.prompt2app.enums.ChatEventType;
 import com.nisha.projects.prompt2app.enums.MessageRole;
@@ -19,6 +20,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
