@@ -1,21 +1,33 @@
 package com.nisha.projects.prompt2app.entity;
 
 import java.time.Instant;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import java.time.LocalDate;
+
+import jakarta.persistence.*;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+@Entity
+@Table(name = "usage_logs", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "date"}) // One log per user per day
+})
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UsageLog {
-  Long id;
-  User user;
-  Project project;
-  String action;
-  Integer tokensUsed;
-  Integer durationMs;
-  String metaData;
-  Instant createdAt;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(name = "user_id", nullable = false)
+    Long userId;
+
+    @Column(nullable = false)
+    LocalDate date;
+
+    Integer tokensUsed;
 }

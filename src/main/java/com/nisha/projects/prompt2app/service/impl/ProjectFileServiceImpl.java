@@ -2,6 +2,7 @@ package com.nisha.projects.prompt2app.service.impl;
 
 import com.nisha.projects.prompt2app.dto.project.FileContentResponse;
 import com.nisha.projects.prompt2app.dto.project.FileNode;
+import com.nisha.projects.prompt2app.dto.project.FileTreeResponse;
 import com.nisha.projects.prompt2app.entity.Project;
 import com.nisha.projects.prompt2app.entity.ProjectFile;
 import com.nisha.projects.prompt2app.error.ResourceNotFoundException;
@@ -26,9 +27,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class ProjectFileServiceImpl implements ProjectFileService {
+
     private final ProjectRepository projectRepository;
     private final ProjectFileRepository projectFileRepository;
     private final MinioClient minioClient;
@@ -36,8 +38,17 @@ public class ProjectFileServiceImpl implements ProjectFileService {
 
     @Value("${minio.project-bucket}")
     private String projectBucket;
+
     private static final String BUCKET_NAME = "projects";
-    
+
+
+    @Override
+    public FileTreeResponse getFileTree(Long projectId) {
+        List<ProjectFile> projectFileList = projectFileRepository.findByProjectId(projectId);
+        List<FileNode> projectFileNodes = projectFileMapper.toListOfFileNode(projectFileList);
+        return new FileTreeResponse(projectFileNodes);
+    }
+
     @Override
     public FileContentResponse getFileContent(Long projectId, String path) {
         String objectName = projectId + "/" + path;
@@ -55,14 +66,6 @@ public class ProjectFileServiceImpl implements ProjectFileService {
             throw new RuntimeException("Failed to read file content", e);
         }
     }
-
-  @Override
-  public List<FileNode> getFileTree(Long projectId) {
-      List<ProjectFile> projectFileList = projectFileRepository.findByProjectId(projectId);
-      List<FileNode> projectFileNodes = projectFileMapper.toListOfFileNode(projectFileList);
-      return new FileTreeResponse(projectFileNodes);
-  }
-
 
     @Override
     public void saveFile(Long projectId, String path, String content) {
@@ -101,7 +104,9 @@ public class ProjectFileServiceImpl implements ProjectFileService {
             log.error("Failed to save file {}/{}", projectId, cleanPath, e);
             throw new RuntimeException("File save failed", e);
         }
+
     }
+
     private String determineContentType(String path) {
         String type = URLConnection.guessContentTypeFromName(path);
         if (type != null) return type;

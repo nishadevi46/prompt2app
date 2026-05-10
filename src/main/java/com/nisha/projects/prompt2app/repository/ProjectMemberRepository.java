@@ -12,20 +12,20 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> {
-  List<ProjectMember> findByProjectId(Long projectId);
 
-  @Query(
-      """
+    List<ProjectMember> findByIdProjectId(Long projectId);
+
+    @Query("""
             SELECT pm.projectRole FROM ProjectMember pm
             WHERE pm.id.projectId = :projectId AND pm.id.userId = :userId
             """)
-  Optional<ProjectRole> findRoleByProjectIdAndUserId(
-      @Param("projectId") Long projectId, @Param("userId") Long userId);
+    Optional<ProjectRole> findRoleByProjectIdAndUserId(@Param("projectId") Long projectId,
+                                                       @Param("userId") Long userId);
 
-  @Query(
-      """
+
+    @Query("""
             SELECT COUNT(pm) FROM ProjectMember pm
             WHERE pm.id.userId = :userId AND pm.projectRole = 'OWNER'
             """)
-  int countProjectOwnedByUser(@Param("userId") Long userId);
+    int countProjectOwnedByUser(@Param("userId") Long userId);
 }
